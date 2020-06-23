@@ -1,2 +1,2 @@
-A project-template
+GNN-ODE
 ======================

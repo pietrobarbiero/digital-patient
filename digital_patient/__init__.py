@@ -1,8 +1,8 @@
-from ._template import TemplateObject
+from ._patient import DigitalPatient
 
 from ._version import __version__
 
 __all__ = [
-    'TemplateObject',
+    'DigitalPatient',
     '__version__'
 ]

@@ -3,10 +3,10 @@ import unittest
 
 class TestTemplateObject(unittest.TestCase):
     def test_object(self):
-        import template
+        import digital_patient
 
-        t = template.TemplateObject()
-        self.assertTrue(isinstance(t, template.TemplateObject))
+        t = digital_patient.TemplateObject()
+        self.assertTrue(isinstance(t, digital_patient.TemplateObject))
         return
 
 
