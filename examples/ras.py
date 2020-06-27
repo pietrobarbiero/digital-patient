@@ -26,17 +26,32 @@ def main():
     x_ras = x_ras[['angII', 'diacid']].values.astype('float32')
     tx_diabetes = x_diabetes['t']
     x_diabetes = x_diabetes[['G', 'I']].values.astype('float32')
-    tx_ras2 = tx_diabetes[tx_diabetes<tx_ras.max()]
-    x_diabetes = x_diabetes[tx_diabetes<tx_ras.max()]
+    t = np.linspace(0, 4.99, 1000)
+    # tx_ras2 = tx_diabetes[tx_diabetes<tx_ras.max()]
+    # x_diabetes = x_diabetes[tx_diabetes<tx_ras.max()]
 
     f_angII = interpolate.interp1d(tx_ras, x_ras[:, 0])
-    x_angII = f_angII(tx_ras2)
+    x_angII = f_angII(t)
     f_diacid = interpolate.interp1d(tx_ras, x_ras[:, 1])
-    x_diacid = f_diacid(tx_ras2)
+    x_diacid = f_diacid(t)
+    f_glu = interpolate.interp1d(tx_diabetes, x_diabetes[:, 0])
+    x_glu = f_glu(t)
+    f_ins = interpolate.interp1d(tx_diabetes, x_diabetes[:, 1])
+    x_ins = f_ins(t)
 
-    x = np.vstack([x_angII, x_diacid, x_diabetes[:, 0]]).T
-    # x = np.vstack([x_angII, x_diacid]).T
+    # x = np.vstack([x_angII, x_diacid, x_glu, x_diacid, x_glu]).T
+    # x = np.vstack([x_angII, x_diacid, x_glu]).T
+    x = np.vstack([x_angII, x_diacid, x_glu]).T
     x = x.astype('float32')
+    t2 = t
+
+    # reps = 3
+    # x = np.tile(x.T, reps=reps).T
+    # t2 = np.arange(0, len(x)) / (np.max(t) * reps)
+
+    # plt.figure()
+    # plt.plot(t2, x[:, 0], )
+    # plt.show()
 
     x = StandardScaler().fit_transform(x)
 
@@ -57,7 +72,12 @@ def main():
     y_train, y_val = labels[train_index], labels[val_index]
 
     dp = digital_patient.DigitalPatient()
-    dp.build_graph()
+    # elist = [(1, 0), (2, 0), (3, 1), (4, 2)]
+    # elist = [(0, 0), (1, 1), (0, 0), (1, 1), (0, 0), (1, 1), (0, 0), (1, 1), (2, 2), (1, 0), (0, 1)]
+    elist = [(0, 0), (1, 1), (2, 2)]
+    # elist = [(0, 0), (1, 1), (2, 2), (1, 0), (2, 0)]
+    # elist = [(0, 0), (1, 1), (1, 0)]
+    dp.build_graph(elist)
 
     nx_G = dp.G_.to_networkx()  # .to_undirected()
     # Kamada-Kawaii layout usually looks pretty for arbitrary graphs
@@ -66,30 +86,30 @@ def main():
     nx.draw(nx_G, pos, with_labels=True, node_color=[[.7, .7, .7]])
     plt.show()
 
-    dp.train(x_train, y_train, epochs=3, lr=0.01)
+    dp.train(x_train, y_train, epochs=10, lr=0.01)
     predictions = dp.predict(x_val)
 
-    t = np.arange(0, len(y_val)) / tx_ras2.max()
+    tf = np.arange(0, len(y_val)) / np.max(t2)
     sns.set_style('whitegrid')
     fig, ax = plt.subplots(figsize=[10, 4])
 
     plt.subplot(131)
-    plt.plot(t, y_val[:, 0], )
-    plt.scatter(t, predictions[:, 0], alpha=0.5, c='orange')
+    plt.plot(tf, y_val[:, 0], )
+    plt.scatter(tf, predictions[:, 0], alpha=0.5, c='orange')
     plt.ylabel('[ANG II]')
     plt.xlabel('t [sec]')
 
     plt.subplot(132)
-    plt.plot(t, y_val[:, 1], label='True dynamics')
-    plt.scatter(t, predictions[:, 1], label='GNN predictions', alpha=0.5, c='orange')
+    plt.plot(tf, y_val[:, 1], label='True dynamics')
+    plt.scatter(tf, predictions[:, 1], label='GNN predictions', alpha=0.5, c='orange')
     plt.ylabel('[diacid]')
     plt.xlabel('t [sec]')
 
-    # plt.subplot(133)
-    # plt.plot(t, y_val[:, 2], label='True dynamics')
-    # plt.scatter(t, predictions[:, 1], label='GNN predictions', alpha=0.5, c='orange')
-    # plt.ylabel('[glucose]')
-    # plt.xlabel('t [sec]')
+    plt.subplot(133)
+    plt.plot(tf, y_val[:, 2], label='True dynamics')
+    plt.scatter(tf, predictions[:, 1], label='GNN predictions', alpha=0.5, c='orange')
+    plt.ylabel('[glucose]')
+    plt.xlabel('t [sec]')
 
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2))
     plt.tight_layout()

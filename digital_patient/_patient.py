@@ -16,12 +16,18 @@ class GCN(nn.Module):
         super(GCN, self).__init__()
         self.conv1 = GraphConv(in_feats, hidden_size)
         self.conv2 = GraphConv(hidden_size, num_classes)
+        self.classify = nn.Linear(num_classes, num_classes)
 
     def forward(self, g, inputs):
         h = self.conv1(g, inputs)
         h = torch.relu(h)
         h = self.conv2(g, h)
         return h
+        # h = torch.relu(h)
+        # g.ndata['h'] = h
+        # hg = dgl.mean_nodes(g, 'h')
+        # logits = self.classify(hg).T
+        # return logits
 
 
 class DigitalPatient:
@@ -44,23 +50,25 @@ class DigitalPatient:
         nx.draw_networkx(nx_G.to_undirected(), pos, node_color=colors,
                          with_labels=True, node_size=300, ax=ax)
 
-    def build_graph(self):
+    def build_graph(self, elist):
         # All edges are stored in two numpy arrays. One for source endpoints
         # while the other for destination endpoints.
         # elist = [(1, 0), (2, 0), (0, 1), (0, 2), (1, 2), (2, 1)]
-        elist = [(1, 0), (0, 1)]
+        # elist = [(1, 0), (0, 1)]
         # Construct a DGLGraph
         self.G_ = dgl.DGLGraph(elist)
 
     def train(self, x_train, y_train, epochs=100, lr=0.01):
         embed = nn.Embedding(x_train.shape[2], x_train.shape[1])
         self.G_.ndata['feat'] = embed.weight
+        # self.net_ = GCN(x_train.shape[1], 10, x_train.shape[2])
         self.net_ = GCN(x_train.shape[1], 10, 1)
 
         inputs = torch.tensor(x_train)
         labels = torch.tensor(y_train[:, :, np.newaxis])  # their labels are different
 
-        optimizer = torch.optim.Adam(itertools.chain(self.net_.parameters(), embed.parameters()), lr=lr)
+        optimizer = torch.optim.Adagrad(itertools.chain(self.net_.parameters(), embed.parameters()), lr=lr)
+        # optimizer = torch.optim.Adagrad(self.net_.parameters(), lr=lr)
         all_logits = []
         for epoch in range(epochs):
             loss_list = []
