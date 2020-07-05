@@ -18,19 +18,19 @@ def main():
 
     # x_ras = pd.read_csv('data/70/DKD_drug-5_glu-10_infection-0_renal-impaired.csv')
     # x_diabetes = pd.read_csv('data/70/DIABETES_glu-17.csv')
-    x_ras = pd.read_csv('data/70/DKD_drug-5_glu-17_infection-0_renal-normal.csv')
-    x_ras.drop(['angII_norm', 'IR'], axis=1, inplace=True)
-    x_diabetes = pd.read_csv('data/70/DIABETES_glu-5.csv')
-    # x_cardio = pd.read_csv('data/70/CARDIO_drug-5_glu-10_infection-0_renal-impaired.csv', index_col=0).iloc[:, :5]
-    tx_ras = x_ras['t']
-    tx_diabetes = x_diabetes['t']
+    # x_ras = pd.read_csv('data/70/DKD_drug-5_glu-17_infection-0_renal-normal.csv')
+    # x_ras.drop(['angII_norm', 'IR'], axis=1, inplace=True)
+    # x_diabetes = pd.read_csv('data/70/DIABETES_glu-5.csv')
+    x_cardio = pd.read_csv('data/70/CARDIO_drug-5_glu-10_infection-0_renal-impaired.csv', index_col=0).iloc[:, :5]
+    tx_cardio = x_cardio['t']
 
-    t = np.linspace(3, 4.99, 200)
+    t = np.linspace(0.8, 4.6, 300)
 
     x_list = []
-    for c in x_ras.columns:
-        f = interpolate.interp1d(tx_ras, x_ras[c].values)
+    for c in x_cardio.columns:
+        f = interpolate.interp1d(tx_cardio, x_cardio[c].values)
         x_list.append(f(t))
+        # x_list.append(x_cardio[c].values)
 
     # x = np.vstack([x_angII, x_diacid, x_glu, x_diacid, x_glu]).T
     # x = np.vstack([x_angII, x_diacid, x_glu]).T
@@ -38,13 +38,13 @@ def main():
     x = x.astype('float32')
     t2 = t
 
-    reps = 20
+    reps = 10
     x = np.tile(x.T, reps=reps).T
     t2 = np.arange(0, len(x)) / (np.max(t) * reps)
     x[:, 0] = t2
 
-    plt.figure()
-    plt.plot(t2, x[:, 0])
+    plt.figure(figsize=[10, 5])
+    plt.plot(t2, x[:, 2])
     plt.show()
 
     x = StandardScaler().fit_transform(x)
@@ -74,12 +74,12 @@ def main():
     # elist = [(1, 0), (2, 0), (3, 1), (4, 2)]
     # elist = [(0, 0), (1, 1), (0, 0), (1, 1), (0, 0), (1, 1), (0, 0), (1, 1), (2, 2), (1, 0), (0, 1)]
     elist = [
-        (0, 0), (1, 1), (2, 2), (3, 3), (4, 4), (5, 5),
-        (6, 6), (7, 7), (8, 8), (9, 9), (10, 10),
-        (0, 1), (0, 2), (0, 3), (0, 4), (0, 5), (0, 6),
-        (0, 7), (0, 8), (0, 9), (0, 10),
-        (4, 1), (3, 1), (1, 7), (1, 5), (6, 5), (5, 3),
-        (5, 7), (5, 8), (5, 9), (10, 7), (10, 1)
+        (0, 0), (1, 1), (2, 2), (3, 3), (4, 4),
+        (0, 1), (0, 2), (0, 3), (0, 4),
+        (1, 2), (1, 3), (1, 4),
+        (2, 1), (2, 3), (2, 4),
+        (3, 1), (3, 2), (3, 4),
+        (4, 1), (4, 2), (4, 3),
     ]
     # elist = [(0, 0), (1, 1), (2, 2), (1, 0), (2, 0)]
     # elist = [(0, 0), (1, 1), (1, 0)]
@@ -92,7 +92,7 @@ def main():
     nx.draw(nx_G, pos, with_labels=True, node_color=[[.7, .7, .7]])
     plt.show()
 
-    dp.train(x_train, y_train, epochs=30, lr=0.01, window_size=window_size-2)
+    dp.train(x_train, y_train, epochs=10, lr=0.01, window_size=window_size-2)
     predictions = dp.predict(x_val)
 
     sns.set_style('whitegrid')
@@ -102,16 +102,16 @@ def main():
     for j, (yv, yp, t) in enumerate(zip(y_val, predictions, t_list)):
         yp = yp.T
         fig, ax = plt.subplots(figsize=[10, 10])
-        for i, c in enumerate(x_ras.columns):
+        for i, c in enumerate(x_cardio.columns):
             plt.subplot(n_rows, n_rows, i+1)
             plt.title(c)
             plt.plot(t, yv[:, i], c='blue')
             plt.plot(t+np.min(t), yp[:, i], c='orange')
-            plt.ylabel('concentration [ng/mL]')
-            plt.xlabel('t [days]')
+            plt.ylabel('pressure [mmHg]')
+            plt.xlabel('t [sec]')
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.2))
         plt.tight_layout()
-        plt.savefig(f'RAS_{j}.png')
+        plt.savefig(f'CARDIO_{j}.png')
         plt.show()
         break
 
