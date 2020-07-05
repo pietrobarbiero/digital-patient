@@ -16,6 +16,7 @@ class GCN(nn.Module):
         super(GCN, self).__init__()
         self.conv1 = GraphConv(in_feats, hidden_size)
         self.conv2 = GraphConv(hidden_size, num_classes)
+        self.conv3 = GraphConv(hidden_size, num_classes)
         self.classify = nn.Linear(num_classes, num_classes)
 
     def forward(self, g, inputs):
@@ -58,16 +59,19 @@ class DigitalPatient:
         # Construct a DGLGraph
         self.G_ = dgl.DGLGraph(elist)
 
-    def train(self, x_train, y_train, epochs=100, lr=0.01):
-        embed = nn.Embedding(x_train.shape[2], x_train.shape[1])
-        self.G_.ndata['feat'] = embed.weight
+    def train(self, x_train, y_train, epochs=100, lr=0.01, window_size=10):
+        node_embed = nn.Embedding(x_train.shape[2], x_train.shape[1])
+        edge_embed = nn.Embedding(self.G_.batch_num_edges[0], window_size)
+        self.G_.ndata['feat'] = node_embed.weight
+        self.G_.edata['w'] = edge_embed.weight
+
         # self.net_ = GCN(x_train.shape[1], 10, x_train.shape[2])
-        self.net_ = GCN(x_train.shape[1], 10, 1)
+        self.net_ = GCN(x_train.shape[1], window_size, window_size)
 
         inputs = torch.tensor(x_train)
-        labels = torch.tensor(y_train[:, :, np.newaxis])  # their labels are different
+        labels = torch.tensor(y_train)  # their labels are different
 
-        optimizer = torch.optim.Adagrad(itertools.chain(self.net_.parameters(), embed.parameters()), lr=lr)
+        optimizer = torch.optim.Adagrad(itertools.chain(self.net_.parameters(), node_embed.parameters(), edge_embed.parameters()), lr=lr)
         # optimizer = torch.optim.Adagrad(self.net_.parameters(), lr=lr)
         all_logits = []
         for epoch in range(epochs):
@@ -76,7 +80,7 @@ class DigitalPatient:
                 logits = self.net_(self.G_, x.T)
                 # we save the logits for visualization later
                 all_logits.append(logits.detach())
-                loss = F.mse_loss(logits, y)
+                loss = F.mse_loss(logits, y.T)
                 loss_list.append(loss.item())
 
                 optimizer.zero_grad()
@@ -92,4 +96,4 @@ class DigitalPatient:
         for b, x in enumerate(x_test):
             pred = self.net_(self.G_, torch.tensor(x.T)).detach().numpy().squeeze()
             preds.append(pred)
-        return np.vstack(preds)
+        return preds
