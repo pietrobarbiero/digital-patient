@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from dgl.nn.pytorch import GraphConv, GATConv
 import matplotlib.pyplot as plt
 import seaborn as sns
-from conformalgnn.base import RegressorMixin
+from .conformal.base import RegressorMixin
 
 
 class GCN(nn.Module):

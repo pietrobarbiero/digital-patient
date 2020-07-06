@@ -4,9 +4,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import networkx as nx
-from conformalgnn.base import RegressorAdapter
-from conformalgnn.icp import IcpRegressor
-from conformalgnn.nc import RegressorNc
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 import numpy as np
@@ -14,6 +11,10 @@ from scipy.integrate import solve_ivp
 
 import digital_patient
 from scipy import interpolate
+
+from digital_patient.conformal.base import RegressorAdapter
+from digital_patient.conformal.icp import IcpRegressor
+from digital_patient.conformal.nc import RegressorNc
 
 
 def main():
@@ -90,7 +91,7 @@ def main():
     # x_val = scaler.transform(x_val)
     # x_test = scaler.transform(x_test)
 
-    dp = digital_patient.DigitalPatient(epochs=5, lr=0.01, window_size=window_size-2)
+    dp = digital_patient.DigitalPatient(epochs=30, lr=0.01, window_size=window_size-2)
     # elist = [(1, 0), (2, 0), (3, 1), (4, 2)]
     # elist = [(0, 0), (1, 1), (0, 0), (1, 1), (0, 0), (1, 1), (0, 0), (1, 1), (2, 2), (1, 0), (0, 1)]
     elist = [
