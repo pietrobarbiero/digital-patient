@@ -9,6 +9,7 @@ import torch.nn.functional as F
 from dgl.nn.pytorch import GraphConv, GATConv
 import matplotlib.pyplot as plt
 import seaborn as sns
+from conformalgnn.base import RegressorMixin
 
 
 class GCN(nn.Module):
@@ -31,10 +32,13 @@ class GCN(nn.Module):
         # return logits
 
 
-class DigitalPatient:
+class DigitalPatient(RegressorMixin):
 
-    def __init__(self):
-        return
+    def __init__(self, epochs=30, lr=0.01, window_size=10):
+        super().__init__()
+        self.epochs = epochs
+        self.lr = lr
+        self.window_size = window_size
 
     def draw(self, ax, nx_G, all_logits, i):
         cls1color = '#00FFFF'
@@ -59,22 +63,25 @@ class DigitalPatient:
         # Construct a DGLGraph
         self.G_ = dgl.DGLGraph(elist)
 
-    def train(self, x_train, y_train, epochs=100, lr=0.01, window_size=10):
+    def fit(self, x_train, y_train):
         node_embed = nn.Embedding(x_train.shape[2], x_train.shape[1])
-        edge_embed = nn.Embedding(self.G_.batch_num_edges[0], window_size)
+        edge_embed = nn.Embedding(self.G_.batch_num_edges[0], self.window_size)
         self.G_.ndata['feat'] = node_embed.weight
         self.G_.edata['w'] = edge_embed.weight
 
         # self.net_ = GCN(x_train.shape[1], 10, x_train.shape[2])
-        self.net_ = GCN(x_train.shape[1], window_size, window_size)
+        self.net_ = GCN(x_train.shape[1], self.window_size, self.window_size)
 
         inputs = torch.tensor(x_train)
         labels = torch.tensor(y_train)  # their labels are different
 
-        optimizer = torch.optim.Adagrad(itertools.chain(self.net_.parameters(), node_embed.parameters(), edge_embed.parameters()), lr=lr)
+        optimizer = torch.optim.Adagrad(itertools.chain(self.net_.parameters(),
+                                                        node_embed.parameters(),
+                                                        edge_embed.parameters()),
+                                        lr=self.lr)
         # optimizer = torch.optim.Adagrad(self.net_.parameters(), lr=lr)
         all_logits = []
-        for epoch in range(epochs):
+        for epoch in range(self.epochs):
             loss_list = []
             for b, (x, y) in enumerate(zip(inputs, labels)):
                 logits = self.net_(self.G_, x.T)
@@ -89,11 +96,11 @@ class DigitalPatient:
 
             print(f'Epoch {epoch} | Loss: {np.mean(loss_list):.4f}')
 
-        return
+        return self
 
-    def predict(self, x_test):
-        preds = []
-        for b, x in enumerate(x_test):
-            pred = self.net_(self.G_, torch.tensor(x.T)).detach().numpy().squeeze()
-            preds.append(pred)
-        return preds
+    def predict(self, x):
+        predictions = []
+        for b, xi in enumerate(x):
+            pred = self.net_(self.G_, torch.tensor(xi.T)).detach().numpy().squeeze().T
+            predictions.append(pred)
+        return np.array(predictions)
