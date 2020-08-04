@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import networkx as nx
+import numpy as np
 
 import digital_patient
 
@@ -21,33 +22,29 @@ def main():
         os.makedirs(result_dir)
 
     # load data
-    window_size = 1000
+    window_size = 500
     x_train, y_train, x_val, y_val, x_test, y_test, edge_list, addendum = load_physiology(window_size)
 
     # instantiate a digital patient model
     G = dgl.DGLGraph(edge_list)
-    dp = digital_patient.DigitalPatient(G, epochs=10, lr=0.01, window_size=window_size-2)
+    dp = digital_patient.DigitalPatient(G, epochs=20, lr=0.01, window_size=window_size-2)
 
-    # plot the graph corresponding to the digital patient
-    nx_G = dp.G.to_networkx()
-    pos = nx.circular_layout(nx_G)
-    node_labels = {}
-    for i, cn in enumerate(list(addendum["RAS"][1]) + list(addendum["CARDIO"][1])):
-        node_labels[i] = cn
-    plt.figure()
-    nx.draw(nx_G, pos, alpha=0.3)
-    nx.draw_networkx_labels(nx_G, pos, labels=node_labels)
-    plt.tight_layout()
-    plt.savefig(f'{result_dir}/graph.png')
-    plt.show()
+    # # plot the graph corresponding to the digital patient
+    # nx_G = dp.G.to_networkx()
+    # pos = nx.circular_layout(nx_G)
+    # node_labels = {}
+    # for i, cn in enumerate(list(addendum["RAS"][1]) + list(addendum["CARDIO"][1])):
+    #     node_labels[i] = cn
+    # plt.figure()
+    # nx.draw(nx_G, pos, alpha=0.3)
+    # nx.draw_networkx_labels(nx_G, pos, labels=node_labels)
+    # plt.tight_layout()
+    # plt.savefig(f'{result_dir}/graph.png')
+    # plt.show()
 
     # instantiate the model, train and predict
-    underlying_model = RegressorAdapter(dp)
-    nc = RegressorNc(underlying_model)
-    icp = IcpRegressor(nc)
-    icp.fit(x_train, y_train)
-    icp.calibrate(x_val, y_val)
-    predictions = icp.predict(x_test, significance=0.01)
+    dp.fit(x_train, y_train)
+    predictions = dp.predict(x_test)
 
     # plot the results
     sns.set_style('whitegrid')
@@ -68,9 +65,15 @@ def main():
                 ylabel= 'pressure [mmHg]'
                 xlabel = 't [sec]'
 
+            tik = np.repeat(ti, pi.shape[0])
+            pik = np.hstack(pi)
+
             plt.figure()
             plt.plot(ti, xi, label='true')
-            plt.fill_between(ti, pi[:, 0], pi[:, 1], alpha=0.2, label='predicted')
+            for pik in pi:
+                plt.plot(ti, pik, c='r', alpha=0.2)
+            # sns.lineplot(tik, pik, alpha=0.2, ci=0.9)
+            # plt.fill_between(ti, pi[:, 0], pi[:, 1], alpha=0.2, label='predicted')
             plt.title(name)
             plt.legend()
             plt.ylabel(ylabel)

@@ -33,14 +33,14 @@ class DigitalPatient(RegressorMixin):
         edge_embed = nn.Embedding(self.G.batch_num_edges[0], self.window_size)
         self.G.ndata['feat'] = node_embed.weight
         self.G.edata['w'] = edge_embed.weight
-        self.net_ = GCN(x_train.shape[1], self.window_size, self.window_size)
+        self.net_ = GCN(x_train.shape[1], self.window_size, 1)
         optimizer = torch.optim.Adagrad(itertools.chain(self.net_.parameters(),
                                                         node_embed.parameters(),
                                                         edge_embed.parameters()),
                                         lr=self.lr)
         # define inputs and outputs
         inputs = torch.tensor(x_train)
-        labels = torch.tensor(y_train)
+        labels = torch.tensor(y_train[:, 0])
 
         # train the model
         self.all_logits_ = []
@@ -49,7 +49,7 @@ class DigitalPatient(RegressorMixin):
             for b, (x, y) in enumerate(zip(inputs, labels)):
                 # forward pass
                 logits = self.net_(self.G, x.T)
-                loss = F.mse_loss(logits, y.T)
+                loss = F.mse_loss(logits.squeeze(), y)
 
                 # we save the logits and the loss for visualization later
                 self.all_logits_.append(logits.detach())
@@ -59,6 +59,7 @@ class DigitalPatient(RegressorMixin):
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
+                # break
 
             print(f'Epoch {epoch} | Loss: {np.mean(loss_list):.4f}')
 
@@ -73,8 +74,17 @@ class DigitalPatient(RegressorMixin):
         """
         predictions = []
         for b, xi in enumerate(x):
-            pred = self.net_(self.G, torch.tensor(xi.T)).detach().numpy().squeeze().T
-            predictions.append(pred)
+            trajectories = []
+            for k in range(5):
+                trajectory = xi.T
+                for j in range(self.window_size):
+                    pred = self.net_(self.G, torch.tensor(trajectory)).detach().numpy()
+                    trajectory = np.concatenate([trajectory[:, 1:], pred], axis=1)
+                trajectories.append(trajectory)
+            trajectories = np.stack(trajectories)
+            predictions.append(trajectories)
+            if b > 1:
+                break
         return np.array(predictions)
 
     def draw(self, ax, epoch=-1):
