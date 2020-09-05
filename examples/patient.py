@@ -18,7 +18,7 @@ from examples.load_data import load_physiology
 
 def main():
     # create directory to save results
-    result_dir = 'results/patient-old1/'
+    result_dir = 'results/patient-old3/'
     if not os.path.isdir(result_dir):
         os.makedirs(result_dir)
 

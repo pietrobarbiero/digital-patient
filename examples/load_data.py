@@ -7,11 +7,16 @@ from sklearn.preprocessing import StandardScaler
 
 def load_physiology(window_size=1000):
     # load simulated physiological data
-    x_ras = pd.read_csv('data/70/DKD_drug-5_glu-7_infection-0_renal-impaired.csv')
-    # x_ras = pd.read_csv('data/70/DKD_drug-0_glu-17_infection-0_renal-impaired.csv')
+    # x_ras = pd.read_csv('data/70/DKD_drug-5_glu-7_infection-0_renal-impaired.csv')
+    # x_cardio = pd.read_csv('data/70/CARDIO_drug-5_glu-7_infection-0_renal-impaired.csv', index_col=0).iloc[:, :5]
+    # x_ras = pd.read_csv('data/70/DKD_drug-0_glu-7_infection-0_renal-impaired.csv')
+    # x_cardio = pd.read_csv('data/70/CARDIO_drug-0_glu-7_infection-0_renal-impaired.csv', index_col=0).iloc[:, :5]
+    x_ras = pd.read_csv('data/70/DKD_drug-0_glu-7_infection-1_renal-impaired.csv')
+    x_cardio = pd.read_csv('data/70/CARDIO_drug-0_glu-7_infection-1_renal-impaired.csv', index_col=0)
+    x_cardio = x_cardio['t', 'Pra', 'Prv', 'Pla', 'Plv']
+    # x_ras = pd.read_csv('data/70/DKD_drug-5_glu-7_infection-1_renal-impaired.csv')
+    # x_cardio = pd.read_csv('data/70/CARDIO_drug-5_glu-7_infection-1_renal-impaired.csv', index_col=0).iloc[:, :5]
     x_ras.drop(['angII_norm', 'IR'], axis=1, inplace=True)
-    x_cardio = pd.read_csv('data/70/CARDIO_drug-5_glu-7_infection-0_renal-impaired.csv', index_col=0).iloc[:, :5]
-    # x_cardio = pd.read_csv('data/70/CARDIO_drug-0_glu-10_infection-1_renal-impaired.csv', index_col=0).iloc[:, :5]
     x_cardio.columns = ['t2', 'Pra', 'Prv', 'Pla', 'Plv']
     tx_ras = x_ras['t']
     tx_cardio = x_cardio['t2']
@@ -99,15 +104,15 @@ def load_physiology(window_size=1000):
         ('Plv', 'Pra'), ('Plv', 'Prv'), ('Plv', 'Pla'),
     ]
 
-    # edge_list = []
-    # for edge in elist:
-    #     i = features.index(edge[0])
-    #     j = features.index(edge[1])
-    #     edge_list.append((i, j))
-
     edge_list = []
-    for i in range(len(features)):
-        for j in range(len(features)):
-            edge_list.append((i, j))
+    for edge in elist:
+        i = features.index(edge[0])
+        j = features.index(edge[1])
+        edge_list.append((i, j))
+
+    # edge_list = []
+    # for i in range(len(features)):
+    #     for j in range(len(features)):
+    #         edge_list.append((i, j))
 
     return x_train, y_train, x_val, y_val, x_test, y_test, edge_list, addendum, scaler
