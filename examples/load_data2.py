@@ -7,18 +7,17 @@ from sklearn.preprocessing import StandardScaler
 
 def load_physiology(window_size=1000):
     # load simulated physiological data
-    x_ras = pd.read_csv('data/70/DKD_drug-0_glu-6_infection-0_renal-normal.csv')
-    x_cardio = pd.read_csv('data/70/CARDIO_drug-0_glu-6_infection-0_renal-normal.csv', index_col=0)
-    # x_ras = pd.read_csv('data/70/DKD_drug-0_glu-8_infection-0_renal-impaired.csv')
-    # x_cardio = pd.read_csv('data/70/CARDIO_drug-0_glu-8_infection-0_renal-impaired.csv', index_col=0)
-    # x_ras = pd.read_csv('data/70/DKD_drug-0_glu-7_infection-1_renal-impaired.csv')
-    # x_cardio = pd.read_csv('data/70/CARDIO_drug-0_glu-7_infection-1_renal-impaired.csv', index_col=0)
+    # x_ras = pd.read_csv('data/70/DKD_drug-5_glu-7_infection-0_renal-impaired.csv')
+    # x_cardio = pd.read_csv('data/70/CARDIO_drug-5_glu-7_infection-0_renal-impaired.csv', index_col=0).iloc[:, :5]
+    # x_ras = pd.read_csv('data/70/DKD_drug-0_glu-7_infection-0_renal-impaired.csv')
+    # x_cardio = pd.read_csv('data/70/CARDIO_drug-0_glu-7_infection-0_renal-impaired.csv', index_col=0).iloc[:, :5]
+    x_ras = pd.read_csv('data/70/DKD_drug-0_glu-7_infection-1_renal-impaired.csv')
+    x_cardio = pd.read_csv('data/70/CARDIO_drug-0_glu-7_infection-1_renal-impaired.csv', index_col=0)
+    x_cardio = x_cardio[['t', 'Pra', 'Prv', 'Pla', 'Plv', 'Ppap', 'Ppad', 'Ppa', 'Ppc', 'Ppv', 'Psa', 'Psap', 'Psc', 'Psv']]
     # x_ras = pd.read_csv('data/70/DKD_drug-5_glu-7_infection-1_renal-impaired.csv')
-    # x_cardio = pd.read_csv('data/70/CARDIO_drug-5_glu-7_infection-1_renal-impaired.csv', index_col=0)
-
-    x_cardio = x_cardio[['t', 'Pra', 'Prv', 'Pla', 'Plv']]
+    # x_cardio = pd.read_csv('data/70/CARDIO_drug-5_glu-7_infection-1_renal-impaired.csv', index_col=0).iloc[:, :5]
     x_ras.drop(['angII_norm', 'IR'], axis=1, inplace=True)
-    x_cardio.columns = ['t2', 'Pra', 'Prv', 'Pla', 'Plv']
+    x_cardio.columns = ['t2', 'Pra', 'Prv', 'Pla', 'Plv', 'Ppap', 'Ppad', 'Ppa', 'Ppc', 'Ppv', 'Psa', 'Psap', 'Psc', 'Psv']
     tx_ras = x_ras['t']
     tx_cardio = x_cardio['t2']
 
@@ -98,11 +97,20 @@ def load_physiology(window_size=1000):
         ('angII', 'Renin'),
         ('angII', 'ang17'), ('angII', 'at1r'), ('angII', 'at2r'), ('ACE2', 'ang17'), ('ACE2', 'angI'),
 
-        ('t2', 'Pra'), ('t2', 'Prv'), ('t2', 'Pla'), ('t2', 'Plv'),
-        ('Pra', 'Prv'), ('Pra', 'Pla'), ('Pra', 'Plv'),
-        ('Prv', 'Pra'), ('Prv', 'Pla'), ('Pra', 'Plv'),
-        ('Pla', 'Pra'), ('Pla', 'Prv'), ('Pla', 'Plv'),
-        ('Plv', 'Pra'), ('Plv', 'Prv'), ('Plv', 'Pla'),
+        ('t2', 't2'), ('t2', 'Pra'), ('t2', 'Prv'), ('t2', 'Pla'), ('t2', 'Plv'), ('t2', 'Ppap'), ('t2', 'Ppad'), ('t2', 'Ppa'), ('t2', 'Ppc'), ('t2', 'Ppv'), ('t2', 'Psa'),  ('t2', 'Psap'), ('t2', 'Psc'), ('t2', 'Psv'),
+        ('Pra', 'Pra'), ('Pra', 'Prv'), ('Pra', 'Pla'), ('Pra', 'Plv'), ('Pra', 'Ppap'), ('Pra', 'Ppad'), ('Pra', 'Ppa'), ('Pra', 'Ppc'), ('Pra', 'Ppv'), ('Pra', 'Psa'),  ('Pra', 'Psap'), ('Pra', 'Psc'), ('Pra', 'Psv'),
+        ('Prv', 'Prv'), ('Prv', 'Pla'), ('Prv', 'Plv'), ('Prv', 'Ppap'), ('Prv', 'Ppad'), ('Prv', 'Ppa'), ('Prv', 'Ppc'), ('Prv', 'Ppv'), ('Prv', 'Psa'),  ('Prv', 'Psap'), ('Prv', 'Psc'), ('Prv', 'Psv'),
+        ('Pla', 'Pla'), ('Pla', 'Plv'), ('Pla', 'Ppap'), ('Pla', 'Ppad'), ('Pla', 'Ppa'), ('Pla', 'Ppc'), ('Pla', 'Ppv'), ('Pla', 'Psa'),  ('Pla', 'Psap'), ('Pla', 'Psc'), ('Pla', 'Psv'),
+        ('Pra', 'Pra'), ('Pra', 'Ppap'), ('Pra', 'Ppad'), ('Pra', 'Ppa'), ('Pra', 'Ppc'), ('Pra', 'Ppv'), ('Pra', 'Psa'),  ('Pra', 'Psap'), ('Pra', 'Psc'), ('Pra', 'Psv'),
+        ('Ppap', 'Ppap'), ('Ppap', 'Ppad'), ('Ppap', 'Ppa'), ('Ppap', 'Ppc'), ('Ppap', 'Ppv'), ('Ppap', 'Psa'), ('Ppap', 'Psap'), ('Ppap', 'Psc'), ('Ppap', 'Psv'),
+        ('Ppad', 'Ppad'), ('Ppad', 'Ppa'), ('Ppad', 'Ppc'), ('Ppad', 'Ppv'), ('Ppad', 'Psa'), ('Ppad', 'Psap'), ('Ppad', 'Psc'), ('Ppad', 'Psv'),
+        ('Ppa', 'Ppa'), ('Ppa', 'Ppc'), ('Ppa', 'Ppv'), ('Ppa', 'Psa'), ('Ppa', 'Psap'), ('Ppa', 'Psc'), ('Ppa', 'Psv'),
+        ('Ppc', 'Ppc'), ('Ppc', 'Ppv'), ('Ppc', 'Psa'), ('Ppc', 'Psap'), ('Ppc', 'Psc'), ('Ppc', 'Psv'),
+        ('Ppv', 'Ppv'), ('Ppv', 'Psa'), ('Ppv', 'Psap'), ('Ppv', 'Psc'), ('Ppv', 'Psv'),
+        ('Psa', 'Psa'), ('Psa', 'Psap'), ('Psa', 'Psc'), ('Psa', 'Psv'),
+        ('Psap', 'Psap'), ('Psap', 'Psc'), ('Psap', 'Psv'),
+        ('Psc', 'Psc'), ('Psc', 'Psv'),
+        ('Psv', 'Psv'),
     ]
 
     edge_list = []
@@ -110,6 +118,7 @@ def load_physiology(window_size=1000):
         i = features.index(edge[0])
         j = features.index(edge[1])
         edge_list.append((i, j))
+        edge_list.append((j, i))
 
     # edge_list = []
     # for i in range(len(features)):

@@ -14,5 +14,6 @@ class GCN(nn.Module):
         h = torch.relu(h)
         h = torch.mean(h, dim=1)
         h = self.conv2(g, h)
+        # self.h_ = h
         h = torch.mean(h, dim=1)
         return h

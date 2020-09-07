@@ -13,7 +13,7 @@ import digital_patient
 from digital_patient.conformal.base import RegressorAdapter
 from digital_patient.conformal.icp import IcpRegressor
 from digital_patient.conformal.nc import RegressorNc
-from examples.load_data import load_physiology
+from examples.load_data2 import load_physiology
 
 
 def main():

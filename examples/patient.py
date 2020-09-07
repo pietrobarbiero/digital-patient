@@ -14,11 +14,12 @@ from digital_patient.conformal.base import RegressorAdapter
 from digital_patient.conformal.icp import IcpRegressor
 from digital_patient.conformal.nc import RegressorNc
 from examples.load_data import load_physiology
+from examples.plot_graph import plot_graph
 
 
 def main():
     # create directory to save results
-    result_dir = 'results/patient-old3/'
+    result_dir = 'results/patient-old5/'
     if not os.path.isdir(result_dir):
         os.makedirs(result_dir)
 
@@ -35,20 +36,26 @@ def main():
 
     # plot the graph corresponding to the digital patient
     nx_G = dp.G.to_networkx()
-    pos = nx.circular_layout(nx_G)
+    # pos = nx.circular_layout(nx_G)
+    pos = nx.spring_layout(nx_G)
     node_labels = {}
     for i, cn in enumerate(list(addendum["RAS"][1]) + list(addendum["CARDIO"][1])):
         node_labels[i] = cn
-    plt.figure()
-    nx.draw(nx_G, pos, alpha=0.3)
-    nx.draw_networkx_labels(nx_G, pos, labels=node_labels)
-    plt.tight_layout()
-    plt.savefig(f'{result_dir}/graph.png')
-    plt.show()
+    # plt.figure()
+    # nx.draw(nx_G, pos, alpha=0.3)
+    # nx.draw_networkx_labels(nx_G, pos, labels=node_labels)
+    # plt.tight_layout()
+    # plt.savefig(f'{result_dir}/graph.png')
+    # plt.show()
 
     # instantiate the model, train and predict
     dp.fit(x_train, y_train)
     predictions = dp.predict(x_test)
+
+    # fig, ax = plt.subplots()
+    # plot_graph(nx_G, , ax)
+    # plt.show()
+    # return
 
     # plot the results
     sns.set_style('whitegrid')

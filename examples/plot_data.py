@@ -3,6 +3,7 @@ import gc
 
 import joblib
 import pandas as pd
+from matplotlib.patches import FancyArrowPatch
 from scipy import interpolate
 import numpy as np
 from sklearn.model_selection import KFold
@@ -40,86 +41,77 @@ def main():
     df3C = (pd.read_csv(f3, index_col=0) * scalerC.scale_[-4]) + scalerC.mean_[-4]
     df4C = (pd.read_csv(f4, index_col=0) * scalerC.scale_[-3]) + scalerC.mean_[-3]
 
+    result_dir = './results/patient-old4/'
+    scalerD = joblib.load(f'{result_dir}scaler.joblib')
+    file_list = glob.glob(f'{result_dir}**.csv')
+    f1, f2, f3, f4 = file_list[5], file_list[9], file_list[12], file_list[13]
+    df1D = (pd.read_csv(f1, index_col=0) * scalerD.scale_[-2]) + scalerD.mean_[-2]
+    df2D = (pd.read_csv(f2, index_col=0) * scalerD.scale_[-1]) + scalerD.mean_[-1]
+    df3D = (pd.read_csv(f3, index_col=0) * scalerD.scale_[-4]) + scalerD.mean_[-4]
+    df4D = (pd.read_csv(f4, index_col=0) * scalerD.scale_[-3]) + scalerD.mean_[-3]
+
     sns.set_style("whitegrid")
 
-    plt.figure(figsize=[5, 3])
-    sns.kdeplot(df1A.iloc[:, 1], df3A.iloc[:, 1], cmap="Greens", shade=True, shade_lowest=False)
-    # sns.kdeplot(df1B.iloc[:, 1], df3B.iloc[:, 1], cmap="Reds", shade=True, shade_lowest=False)
-    sns.kdeplot(df1B.iloc[:, 1], df3B.iloc[:, 1], cmap="Reds", n_levels=5)
-    sns.kdeplot(df1C.iloc[:, 1], df3C.iloc[:, 1], cmap="Reds", n_levels=5)
+    fig, ax = plt.subplots(figsize=[5, 3])
+    sns.kdeplot(df1A.iloc[:, 1], df3A.iloc[:, 1], cmap="Greys_r", n_levels=5, shade=True, shade_lowest=False, alpha=0.2)
+    # sns.kdeplot(np.hstack(df1A.iloc[:, 2:].values), np.hstack(df3A.iloc[:, 2:].values), cmap="Greens_r", n_levels=10)
+    sns.kdeplot(df1B.iloc[:, 1], df3B.iloc[:, 1], cmap="Greys_r", n_levels=5, shade=True, shade_lowest=False, alpha=0.2)
+    # sns.kdeplot(np.hstack(df1C.iloc[:, 2:].values), np.hstack(df3C.iloc[:, 2:].values), cmap="Reds_r", n_levels=100)
     sns.despine(left=True, bottom=True)
+    ax.annotate("predicted",
+                xy=(11.7, 6.5), xycoords='data',
+                xytext=(10, 8), textcoords='data',
+                arrowprops=dict(arrowstyle="->",
+                                connectionstyle="angle3", color='black'),
+                )
+    ax.annotate("true",
+                xy=(12.5, 4.5), xycoords='data',
+                xytext=(13, 3), textcoords='data',
+                arrowprops=dict(arrowstyle="->",
+                                connectionstyle="angle3", color='black'),
+                )
+    ax.annotate("viral infection",
+                xy=(9.5, 4), xycoords='data',
+                xytext=(7.5, 2), textcoords='data',
+                arrowprops=dict(arrowstyle="->",
+                                connectionstyle="angle3", color='black'),
+                )
+    ax.annotate("healthy state",
+                xy=(7.5, 5), xycoords='data',
+                xytext=(7.6, 6), textcoords='data',
+                arrowprops=dict(arrowstyle="->",
+                                connectionstyle="angle3", color='black'),
+                )
     plt.xlabel('left atrium (mmHg)')
     plt.ylabel('right atrium (mmHg)')
     plt.tight_layout()
-    plt.savefig(f"./results/pla_pra.png")
-    plt.savefig(f"./results/pla_pra.pdf")
+    # plt.savefig(f"./results/pla_pra_healthy_infected.png")
+    # plt.savefig(f"./results/pla_pra_healthy_infected.pdf")
     plt.show()
 
-    plt.figure(figsize=[5, 3])
-    sns.kdeplot(df2A.iloc[:, 1], df4A.iloc[:, 1], cmap="Greens", shade=True, shade_lowest=False)
-    # sns.kdeplot(df2B.iloc[:, 1], df4B.iloc[:, 1], cmap="Reds", shade=True, shade_lowest=False)
-    sns.kdeplot(df2B.iloc[:, 1], df4B.iloc[:, 1], cmap="Blues", n_levels=5)
-    sns.kdeplot(df2C.iloc[:, 1], df4C.iloc[:, 1], cmap="Reds", n_levels=5)
-    # plt.legend(["5mg", "0mg"], loc='center left', bbox_to_anchor=(1, 0.5))
+    fig, ax = plt.subplots(figsize=[5, 3])
+    sns.kdeplot(df1A.iloc[:, 1], df3A.iloc[:, 1], cmap="Greys_r", n_levels=5, shade=True, shade_lowest=False, alpha=0.2)
+    sns.kdeplot(np.hstack(df1A.iloc[:, 2:].values), np.hstack(df3A.iloc[:, 2:].values), cmap="Greens_r", n_levels=10)
+    sns.kdeplot(df1C.iloc[:, 1], df3C.iloc[:, 1], cmap="Greys_r", n_levels=5, shade=True, shade_lowest=False, alpha=0.2)
+    sns.kdeplot(np.hstack(df1C.iloc[:, 2:].values), np.hstack(df3C.iloc[:, 2:].values), cmap="Reds_r", n_levels=100)
+    sns.kdeplot(df1D.iloc[:, 1], df3D.iloc[:, 1], cmap="Greys_r", n_levels=5, shade=True, shade_lowest=False, alpha=0.2)
+    sns.kdeplot(np.hstack(df1D.iloc[:, 2:].values), np.hstack(df3D.iloc[:, 2:].values), cmap="Oranges_r", n_levels=20)
     sns.despine(left=True, bottom=True)
-    plt.xlabel('left ventricle (mmHg)')
-    plt.ylabel('right ventricle (mmHg)')
+    style = "Simple,tail_width=0.5,head_width=4,head_length=8"
+    kw = dict(arrowstyle=style)
+    a1 = FancyArrowPatch((7, 5.5), (11, 8), connectionstyle="arc3,rad=-0.3", color='black', **kw)
+    ax.add_patch(a1)
+    plt.text(8.6, 8.6, 'viral infection', ha='left', rotation=0, wrap=True)
+    a2 = FancyArrowPatch((11.5, 2.8), (8, 2), connectionstyle="arc3,rad=-0.3", color='black', **kw)
+    ax.add_patch(a2)
+    plt.text(8.8, 0.7, 'treatment', ha='left', rotation=0, wrap=True)
+    plt.ylim([0.5, 9.5])
+    plt.xlabel('left atrium (mmHg)')
+    plt.ylabel('right atrium (mmHg)')
     plt.tight_layout()
-    plt.savefig(f"./results/plv_prv.png")
-    plt.savefig(f"./results/plv_prv.pdf")
+    plt.savefig(f"./results/pla_pra_infected.png")
+    plt.savefig(f"./results/pla_pra_infected.pdf")
     plt.show()
-
-    # plt.figure(figsize=[5, 3])
-    # sns.lineplot(x=df2.iloc[:, 0], y=df1.iloc[:, 1], alpha=1)
-    # sns.lineplot(x=df2.iloc[:, 0], y=df2.iloc[:, 1], alpha=1)
-    # sns.lineplot(x=df2.iloc[:, 0], y=df3.iloc[:, 1], alpha=1)
-    # sns.lineplot(x=df2.iloc[:, 0], y=df4.iloc[:, 1], alpha=1)
-    # sns.despine(left=True, bottom=True)
-    # plt.tight_layout()
-    # # plt.savefig(f"{plot_dir}/{measure[0]}_{measure[1]}_pv.png")
-    # # plt.savefig(f"{plot_dir}/{measure[0]}_{measure[1]}_pv.pdf")
-    # plt.show()
-    #
-    # plt.figure(figsize=[5, 3])
-    # # for i in range(df1.shape[1]):
-    #     # if i == 2:
-    #         # g = sns.scatterplot(x=df4.iloc[:, 0], y=df4.iloc[:, i], color='red', alpha=0.1)
-    #         # sns.kdeplot(df2.iloc[:, i], df4.iloc[:, i], cmap="Reds", shade=True, shade_lowest=False)
-    # g = sns.scatterplot(x=df2.iloc[:, 0], y=df2.iloc[:, 1], alpha=1)
-    # # plt.legend(["H", "C+T", "V", "C+V", "C+V+T"], loc='center left', bbox_to_anchor=(1, 0.5))
-    # # plt.title(f"{title}")
-    # # plt.xlim([0, 150])
-    # # plt.ylim([0, 40])
-    # sns.despine(left=True, bottom=True)
-    # # plt.xlabel(xlabel)
-    # # plt.ylabel(ylabel)
-    # plt.tight_layout()
-    # # plt.savefig(f"{plot_dir}/{measure[0]}_{measure[1]}_pv.png")
-    # # plt.savefig(f"{plot_dir}/{measure[0]}_{measure[1]}_pv.pdf")
-    # plt.show()
-    #
-    #
-    # plt.figure(figsize=[5, 3])
-    # for i in range(df1.shape[1]):
-    #     if i == 2:
-    #         # g = sns.scatterplot(x=df4.iloc[:, 0], y=df4.iloc[:, i], color='red', alpha=0.1)
-    #         sns.kdeplot(df1.iloc[:, i], df3.iloc[:, i], cmap="Reds", shade=True, shade_lowest=False)
-    # # g = sns.scatterplot(x=df4.iloc[:, 1], y=df2.iloc[:, 1], alpha=1)
-    # # plt.legend(["H", "C+T", "V", "C+V", "C+V+T"], loc='center left', bbox_to_anchor=(1, 0.5))
-    # # plt.title(f"{title}")
-    # # plt.xlim([min_y[0], max_y[0]])
-    # # plt.ylim([min_y[1], max_y[1]])
-    # sns.despine(left=True, bottom=True)
-    # # plt.xlabel(xlabel)
-    # # plt.ylabel(ylabel)
-    # plt.tight_layout()
-    # # plt.savefig(f"{plot_dir}/{measure[0]}_{measure[1]}_pv.png")
-    # # plt.savefig(f"{plot_dir}/{measure[0]}_{measure[1]}_pv.pdf")
-    # plt.show()
-    #
-    # plt.clf()
-    # plt.close()
-    # gc.collect()
 
     return
 
