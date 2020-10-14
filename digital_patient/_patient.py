@@ -31,19 +31,20 @@ class DigitalPatient(RegressorMixin):
         """
         # initialize GCN
         node_embed = nn.Embedding(x_train.shape[2], x_train.shape[1])
-        edge_embed = nn.Embedding(self.G.batch_num_edges[0], self.window_size)
+        # edge_embed = nn.Embedding(self.G.batch_num_edges[0], self.window_size)
         self.G.ndata['feat'] = node_embed.weight
-        self.G.edata['w'] = edge_embed.weight
+        # self.G.edata['w'] = edge_embed.weight
         self.net_ = GCN(x_train.shape[1], self.window_size, y_train.shape[1])
         optimizer = torch.optim.Adagrad(itertools.chain(self.net_.parameters(),
-                                                        node_embed.parameters(),
-                                                        edge_embed.parameters()),
+                                                        node_embed.parameters()),
+                                                        # edge_embed.parameters()),
                                         lr=self.lr)
         # define inputs and outputs
         inputs = torch.tensor(x_train)
         labels = torch.tensor(y_train)
 
         # train the model
+        torch.autograd.set_detect_anomaly(True)
         self.all_logits_ = []
         for epoch in range(self.epochs):
             mse_loss_list = []
