@@ -9,10 +9,9 @@ import torch.nn.functional as F
 import matplotlib.pyplot as plt
 
 from ._nn import GCN
-from .conformal.base import RegressorMixin
 
 
-class DigitalPatient(RegressorMixin):
+class DigitalPatient():
 
     def __init__(self, G, epochs=30, lr=0.01, window_size=10):
         super().__init__()
@@ -31,13 +30,18 @@ class DigitalPatient(RegressorMixin):
         """
         # initialize GCN
         node_embed = nn.Embedding(x_train.shape[2], x_train.shape[1])
-        edge_embed = nn.Embedding(self.G.batch_num_edges[0], self.window_size)
+        # edge_embed = nn.Embedding(self.G.batch_num_edges[0], self.window_size)
         self.G.ndata['feat'] = node_embed.weight
-        self.G.edata['w'] = edge_embed.weight
-        self.net_ = GCN(x_train.shape[1], self.window_size, y_train.shape[1])
+        # self.G.edata['w'] = edge_embed.weight
+        # normalization
+        degs = self.G.in_degrees().float()
+        norm = torch.pow(degs, -0.5)
+        norm[torch.isinf(norm)] = 0
+        self.G.ndata['norm'] = norm.unsqueeze(1)
+
+        self.net_ = GCN(self.G, x_train.shape[1], self.window_size, y_train.shape[1])
         optimizer = torch.optim.Adagrad(itertools.chain(self.net_.parameters(),
-                                                        node_embed.parameters(),
-                                                        edge_embed.parameters()),
+                                                        node_embed.parameters()),
                                         lr=self.lr)
         # define inputs and outputs
         inputs = torch.tensor(x_train)
@@ -49,37 +53,38 @@ class DigitalPatient(RegressorMixin):
             mse_loss_list = []
             attention_loss_list = []
             for b, (x, y) in enumerate(zip(inputs, labels)):
-                if self.net_.conv1.graph_ is None:
-                    attention = torch.zeros(1)
-                else:
-                    attention1 = self.net_.conv1.graph_.edata['a'].clone().detach()
-                    attention2 = self.net_.conv2.graph_.edata['a'].clone().detach()
-                    attention = attention1 * attention2
+                self.net_.train()
+                # if self.net_.conv1.graph_ is None:
+                #     attention = torch.zeros(1)
+                # else:
+                #     attention1 = self.net_.conv1.graph_.edata['a'].clone().detach()
+                #     attention2 = self.net_.conv2.graph_.edata['a'].clone().detach()
+                #     attention = attention1 * attention2
 
                 # forward pass
-                logits = self.net_(self.G, x.T)
+                logits = self.net_(x.T)
                 mse_loss = F.mse_loss(logits.squeeze(), y)
-                attention_loss = torch.norm(attention, 2)
-                loss = mse_loss + attention_loss
+                # attention_loss = torch.norm(attention, 2)
+                # loss = mse_loss + attention_loss
                 mse_loss_list.append(mse_loss.item())
-                attention_loss_list.append(attention_loss.item())
+                # attention_loss_list.append(attention_loss.item())
 
                 # backward pass
                 optimizer.zero_grad()
-                loss.backward()
+                mse_loss.backward()
                 optimizer.step()
                 # break
 
-            if display:
-                attention_np = attention.detach().numpy().squeeze()
-                plt.figure()
-                nx.draw_networkx_nodes(nx_G, pos)
-                nx.draw_networkx_edges(nx_G, pos, width=(attention_np+1)**2,
-                                       edge_color=attention_np, edge_cmap=plt.get_cmap('Reds'))
-                nx.draw_networkx_labels(nx_G, pos, font_color='w', labels=node_labels)
-                plt.tight_layout()
-                plt.savefig(f'{result_dir}/graph_{epoch}.png')
-                plt.show()
+            # if display:
+            #     attention_np = attention.detach().numpy().squeeze()
+            #     plt.figure()
+            #     nx.draw_networkx_nodes(nx_G, pos)
+            #     nx.draw_networkx_edges(nx_G, pos, width=(attention_np+1)**2,
+            #                            edge_color=attention_np, edge_cmap=plt.get_cmap('Reds'))
+            #     nx.draw_networkx_labels(nx_G, pos, font_color='w', labels=node_labels)
+            #     plt.tight_layout()
+            #     plt.savefig(f'{result_dir}/graph_{epoch}.png')
+            #     plt.show()
 
             print(f'Epoch {epoch}'
                   f' | MSE loss: {np.mean(mse_loss_list):.4f}'
@@ -109,7 +114,7 @@ class DigitalPatient(RegressorMixin):
                 if b > 1:
                     break
             else:
-                pred = self.net_(self.G, torch.tensor(xi.T)).detach().numpy()[0]
+                pred = self.net_(torch.tensor(xi.T)).detach().numpy()
                 predictions.append(pred)
         return np.array(predictions).squeeze()
 
