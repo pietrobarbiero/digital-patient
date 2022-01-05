@@ -30,9 +30,10 @@ class DigitalPatient(RegressorMixin):
         """
         # initialize GCN
         node_embed = nn.Embedding(x_train.shape[2], x_train.shape[1])
-        edge_embed = nn.Embedding(self.G.batch_num_edges[0], self.window_size)
+        edge_embed = nn.Embedding(self.G.batch_num_edges()[0], self.window_size)
         self.G.ndata['feat'] = node_embed.weight
         self.G.edata['w'] = edge_embed.weight
+        self.G = dgl.add_self_loop(self.G)
         self.net_ = GCN(x_train.shape[1], self.window_size, 1)
         optimizer = torch.optim.Adagrad(itertools.chain(self.net_.parameters(),
                                                         node_embed.parameters(),
